@@ -423,3 +423,48 @@ class EvidenceGraph:
             )
         return instance
 
+
+def build_evidence_graph(
+    contract_source: Union[str, Dict[str, Any]],
+    trace_data: Dict[str, Any],
+    file_path: str = "Contract.sol",
+    incident_id: Optional[str] = None,
+) -> EvidenceGraph:
+    """High-level integration helper orchestrating AST/code extraction and on-chain trace parsing.
+
+    1. Populates `CodeNode` elements and structural/data-flow edges (`DEPENDS_ON`, `CALLS`)
+       via `ASTVisitor`.
+    2. Populates `TxNode`, `CallNode`, `StateNode`, `AssetNode`, and `InvariantNode` elements
+       and runtime edges (`CALLS`, `MODIFIES_STATE`, `TRANSFERS_ASSET`, `VIOLATES`) via `TraceParser`.
+    3. Cross-links static `CodeNode` assignments to matching `StateNode` variables (`MODIFIES_STATE`).
+    """
+    from core.analyzer.ast_visitor import ASTVisitor
+    from core.analyzer.trace_parser import TraceParser
+
+    resolved_incident_id = incident_id or trace_data.get("incident_id")
+    graph = EvidenceGraph(incident_id=resolved_incident_id)
+
+    ast_visitor = ASTVisitor(evidence_graph=graph)
+    code_nodes = ast_visitor.parse(contract_source, file_path=file_path)
+
+    trace_parser = TraceParser(evidence_graph=graph)
+    trace_parser.parse(trace_data)
+
+    # Cross-layer linking: connect CodeNodes that assign to a state variable to matching StateNodes
+    state_nodes = [n for n in graph.get_nodes_by_type(NodeType.STATE) if isinstance(n, StateNode)]
+    for s_node in state_nodes:
+        base_var = s_node.variable_name.split("[")[0].split(".")[0].strip()
+        if not base_var:
+            continue
+        for c_node in code_nodes:
+            if base_var in c_node.source_code and "=" in c_node.source_code:
+                graph.add_edge(
+                    c_node.node_id,
+                    s_node.node_id,
+                    EdgeType.MODIFIES_STATE,
+                    metadata={"cross_layer": "code_to_state", "variable": base_var},
+                )
+
+    return graph
+
+

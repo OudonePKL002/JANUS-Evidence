@@ -1,0 +1,67 @@
+# ==============================================================================
+# JANUS-Evidence .gitignore
+# ==============================================================================
+
+# 1. Python Caches & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+env/
+ENV/
+
+# 2. Environment Variables, API Keys & Local Sandbox Logs
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+*.pem
+*.log
+logs/
+rpc_cache/
+anvil_cache/
+
+# 3. Solidity / Foundry / Hardhat Build Artifacts
+out/
+cache/
+broadcast/
+artifacts/
+typechain-types/
+node_modules/
+crytic-export/
+
+# 4. OS & IDE Specific Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+

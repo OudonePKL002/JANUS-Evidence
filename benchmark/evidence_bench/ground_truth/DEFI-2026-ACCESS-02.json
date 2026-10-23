@@ -1,0 +1,68 @@
+{
+  "incident_id": "DEFI-2026-ACCESS-02",
+  "true_causal_factors": [
+    "HyperBridgeMigrator:emergencySweep:1",
+    "AST:HyperBridgeMigrator:emergencySweep:1",
+    "STATE:0x912CE59144191C1204E64559FE8253a0e49E6548:0x04"
+  ],
+  "plausible_non_causal_factors": [
+    "HyperBridgeMigrator:setSlippageTolerance:1",
+    "HyperBridgeMigrator:updateBridgeNonce:2"
+  ],
+  "expected_6_slots": {
+    "pre_attack_state": {
+      "slot_index": 1,
+      "slot_name": "pre_attack_state",
+      "description": "HyperBridgeMigrator holds locked bridge collateral with guardianInitialized == false.",
+      "evidence_pointers": [
+        "STATE:0x912CE59144191C1204E64559FE8253a0e49E6548:0x04"
+      ]
+    },
+    "attacker_input": {
+      "slot_index": 2,
+      "slot_name": "attacker_input",
+      "description": "Unprivileged attacker EOA calls emergencySweep(address token, address recipient) directly.",
+      "evidence_pointers": [
+        "0xdeadbeef9999888877776666555544443333222211110000ffffeeeeddddcccc",
+        "CALL-1"
+      ]
+    },
+    "vulnerable_operation": {
+      "slot_index": 3,
+      "slot_name": "vulnerable_operation",
+      "description": "Public emergencySweep function lacks onlyGuardian access control modifier before executing IERC20(token).transfer(recipient, bal).",
+      "evidence_pointers": [
+        "AST:HyperBridgeMigrator:emergencySweep:1",
+        "HyperBridgeMigrator:emergencySweep:1"
+      ]
+    },
+    "state_invariant_breakdown": {
+      "slot_index": 4,
+      "slot_name": "state_invariant_breakdown",
+      "description": "Access control invariant msg.sender == guardian is violated on privileged collateral sweep.",
+      "evidence_pointers": [
+        "INV-ACCESS-GUARDIAN"
+      ]
+    },
+    "asset_flow_impact": {
+      "slot_index": 5,
+      "slot_name": "asset_flow_impact",
+      "description": "2,500,000 USDC bridge reserves transferred to attacker EOA.",
+      "evidence_pointers": [
+        "ASSET-USDC-SWEEP-1"
+      ]
+    },
+    "minimal_causal_chain": {
+      "slot_index": 6,
+      "slot_name": "minimal_causal_chain",
+      "description": "CALL-1 -> HyperBridgeMigrator:emergencySweep:1 -> INV-ACCESS-GUARDIAN -> ASSET-USDC-SWEEP-1",
+      "evidence_pointers": [
+        "CALL-1",
+        "HyperBridgeMigrator:emergencySweep:1",
+        "INV-ACCESS-GUARDIAN",
+        "ASSET-USDC-SWEEP-1"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,70 @@
+{
+  "incident_id": "DEFI-2026-REENTRANCY-01",
+  "true_causal_factors": [
+    "OmniYieldVault:withdrawAll:3",
+    "AST:OmniYieldVault:withdrawAll:3",
+    "STATE:0x7F39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0:0x00"
+  ],
+  "plausible_non_causal_factors": [
+    "OmniYieldVault:previewSpotOracle:2",
+    "OmniYieldVault:accrueFeeRounding:1"
+  ],
+  "expected_6_slots": {
+    "pre_attack_state": {
+      "slot_index": 1,
+      "slot_name": "pre_attack_state",
+      "description": "OmniYieldVault holds 100 ETH liquidity with attacker shares[attacker] > 0 prior to state zeroing.",
+      "evidence_pointers": [
+        "STATE:0x7F39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0:0x00",
+        "STATE:0x7F39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0:0x01"
+      ]
+    },
+    "attacker_input": {
+      "slot_index": 2,
+      "slot_name": "attacker_input",
+      "description": "Attacker invokes withdrawAll(uint256) from a contract with a reentrant receive() fallback.",
+      "evidence_pointers": [
+        "0xfeedface0000111122223333444455556666777788889999aaaabbbbccccdddd",
+        "CALL-1"
+      ]
+    },
+    "vulnerable_operation": {
+      "slot_index": 3,
+      "slot_name": "vulnerable_operation",
+      "description": "Unchecked external ETH transfer msg.sender.call{value: amount}(\"\") executes before shares[msg.sender] is decremented.",
+      "evidence_pointers": [
+        "AST:OmniYieldVault:withdrawAll:3",
+        "OmniYieldVault:withdrawAll:3"
+      ]
+    },
+    "state_invariant_breakdown": {
+      "slot_index": 4,
+      "slot_name": "state_invariant_breakdown",
+      "description": "Vault solvency invariant address(this).balance >= totalReserve is violated during recursive call frames.",
+      "evidence_pointers": [
+        "INV-SOLVENCY-VAULT"
+      ]
+    },
+    "asset_flow_impact": {
+      "slot_index": 5,
+      "slot_name": "asset_flow_impact",
+      "description": "100 ETH is drained from OmniYieldVault to the attacker exploit contract.",
+      "evidence_pointers": [
+        "ASSET-ETH-1"
+      ]
+    },
+    "minimal_causal_chain": {
+      "slot_index": 6,
+      "slot_name": "minimal_causal_chain",
+      "description": "CALL-1 -> OmniYieldVault:withdrawAll:3 -> STATE:0x7F39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0:0x00 -> INV-SOLVENCY-VAULT -> ASSET-ETH-1",
+      "evidence_pointers": [
+        "CALL-1",
+        "OmniYieldVault:withdrawAll:3",
+        "STATE:0x7F39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0:0x00",
+        "INV-SOLVENCY-VAULT",
+        "ASSET-ETH-1"
+      ]
+    }
+  }
+}
+
